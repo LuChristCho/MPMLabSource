@@ -57,6 +57,35 @@
             gap: 15px;
         }
 
+        .branch-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .branch-selector select {
+            padding: 8px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1em;
+            background: white;
+            cursor: pointer;
+        }
+
+        .branch-selector button {
+            padding: 8px 20px;
+            background: #6B73FF;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+        }
+
+        .branch-selector button:hover {
+            background: #000DFF;
+        }
+
         .repo-path {
             display: flex;
             align-items: center;
@@ -82,6 +111,34 @@
             padding: 8px 15px;
             border-radius: 50px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        .manual-input {
+            padding: 20px 30px;
+            background: #fff3cd;
+            border-bottom: 1px solid #ffeeba;
+            display: none;
+        }
+
+        .manual-input.show {
+            display: block;
+        }
+
+        .manual-input input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ffc107;
+            border-radius: 5px;
+        }
+
+        .manual-input button {
+            padding: 10px 20px;
+            background: #ffc107;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            color: #000;
         }
 
         .search-box {
@@ -271,6 +328,12 @@
             color: #dee2e6;
         }
 
+        .error-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #dc3545;
+        }
+
         .footer {
             background: #f8f9fa;
             padding: 20px 30px;
@@ -332,6 +395,17 @@
             cursor: pointer;
             font-size: 1.1em;
         }
+
+        .retry-btn {
+            padding: 10px 30px;
+            background: #6B73FF;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1em;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
@@ -342,9 +416,13 @@
         </div>
 
         <div class="repo-info" id="repoInfo">
-            <div class="repo-path">
-                <i>📂</i>
-                <span id="repoPath">Loading...</span>
+            <div class="branch-selector">
+                <select id="branchSelect">
+                    <option value="main">main</option>
+                    <option value="master">master</option>
+                    <option value="gh-pages">gh-pages</option>
+                </select>
+                <button onclick="loadFiles()">Load</button>
             </div>
             <div class="stats">
                 <div class="stat-item">
@@ -358,8 +436,15 @@
             </div>
         </div>
 
+        <div class="manual-input" id="manualInput">
+            <p>⚠️ Repository information could not be detected automatically. Please enter manually:</p>
+            <input type="text" id="manualOwner" placeholder="GitHub username (e.g., username)" value="">
+            <input type="text" id="manualRepo" placeholder="Repository name (e.g., my-project)" value="">
+            <button onclick="manualLoad()">Load with manual information</button>
+        </div>
+
         <div class="breadcrumb" id="breadcrumb">
-            <button class="root-btn" onclick="navigateToRoot()">Main Page</button>
+            <button class="root-btn" onclick="navigateToRoot()">🏠 Main Page</button>
         </div>
 
         <div class="search-box">
@@ -379,44 +464,195 @@
     </div>
 
     <script>
-        const repoInfo = {
-            owner: window.location.pathname.split('/')[1],
-            repo: window.location.pathname.split('/')[2],
-            branch: 'main'
-        };
-
         let allFiles = [];
         let currentPath = '';
+        let currentOwner = 'LuChristCho';
+        let currentRepo = 'MPMLabSource';
+        let currentBranch = 'main';
 
-        document.getElementById('repoPath').textContent = `${repoInfo.owner}/${repoInfo.repo}`;
         document.getElementById('updateDate').textContent = new Date().toLocaleDateString('fa-IR');
+
+        function detectRepo() {
+            const pathParts = window.location.pathname.split('/').filter(p => p);
+            
+            if (pathParts.length >= 2) {
+                currentOwner = pathParts[0].replace('.github.io', '');
+                currentRepo = pathParts[1];
+                document.getElementById('repoPath').textContent = `${currentOwner}/${currentRepo}`;
+            } else {
+                document.getElementById('manualInput').classList.add('show');
+            }
+        }
+
+        async function loadFiles() {
+            currentBranch = document.getElementById('branchSelect').value;
+            
+            if (!currentOwner || !currentRepo) {
+                detectRepo();
+                if (!currentOwner || !currentRepo) {
+                    return;
+                }
+            }
+
+            document.getElementById('fileList').innerHTML = `
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <p>Loading...</p>
+                </div>
+            `;
+
+            await fetchFiles();
+        }
+
+        async function manualLoad() {
+            currentOwner = document.getElementById('manualOwner').value.trim();
+            currentRepo = document.getElementById('manualRepo').value.trim();
+            currentBranch = document.getElementById('branchSelect').value;
+
+            if (!currentOwner || !currentRepo) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            document.getElementById('manualInput').classList.remove('show');
+            document.getElementById('repoPath').textContent = `${currentOwner}/${currentRepo}`;
+            await fetchFiles();
+        }
 
         async function fetchFiles() {
             try {
-                const apiUrl = `https://api.github.com/repos/${repoInfo.owner}/${repoInfo.repo}/git/trees/${repoInfo.branch}?recursive=1`;
-                const response = await fetch(apiUrl);
+                const apiUrl = `https://api.github.com/repos/${currentOwner}/${currentRepo}/git/trees/${currentBranch}?recursive=1`;
+                
+                console.log('Fetching from:', apiUrl);
+
+                let response = await fetch(apiUrl);
+                
+                if (!response.ok) {
+                    if (response.status === 0 || response.type === 'opaque') {
+                        throw new Error('CORS error');
+                    }
+                    
+                    if (response.status === 404) {
+                        const masterUrl = `https://api.github.com/repos/${currentOwner}/${currentRepo}/git/trees/master?recursive=1`;
+                        response = await fetch(masterUrl);
+                        if (response.ok) {
+                            currentBranch = 'master';
+                            document.getElementById('branchSelect').value = 'master';
+                        } else {
+                            throw new Error('Branch not found');
+                        }
+                    } else {
+                        throw new Error(`HTTP error ${response.status}`);
+                    }
+                }
+
                 const data = await response.json();
                 
                 if (data.tree) {
                     allFiles = data.tree.filter(item => item.type === 'blob');
-                    displayFiles();
+                    
+                    if (allFiles.length === 0) {
+                        await fetchFilesAlternative();
+                    } else {
+                        displayFiles();
+                        updateStats();
+                    }
                 } else {
-                    showError('Error receiving information');
+                    await fetchFilesAlternative();
                 }
             } catch (error) {
                 console.error('Error:', error);
-                showError('Error connecting to GitHub');
+                await fetchFilesAlternative();
             }
         }
 
-        function showError(message) {
+        async function fetchFilesAlternative() {
+            try {
+                const contentsUrl = `https://api.github.com/repos/${currentOwner}/${currentRepo}/contents?ref=${currentBranch}`;
+                
+                const response = await fetch(contentsUrl);
+                
+                if (!response.ok) {
+                    throw new Error('Alternative method failed');
+                }
+
+                const contents = await response.json();
+                
+                allFiles = [];
+                
+                for (const item of contents) {
+                    if (item.type === 'file') {
+                        allFiles.push({
+                            path: item.name,
+                            type: 'blob',
+                            url: item.download_url
+                        });
+                    } else if (item.type === 'dir') {
+                        await processDirectory(item.path, item.url);
+                    }
+                }
+                
+                if (allFiles.length > 0) {
+                    displayFiles();
+                    updateStats();
+                } else {
+                    showManualInput();
+                }
+            } catch (error) {
+                console.error('Alternative error:', error);
+                showManualInput();
+            }
+        }
+
+        async function processDirectory(path, apiUrl) {
+            try {
+                const response = await fetch(apiUrl);
+                const contents = await response.json();
+                
+                for (const item of contents) {
+                    if (item.type === 'file') {
+                        allFiles.push({
+                            path: item.path,
+                            type: 'blob',
+                            url: item.download_url
+                        });
+                    } else if (item.type === 'dir') {
+                        await processDirectory(item.path, item.url);
+                    }
+                }
+            } catch (error) {
+                console.error('Error processing directory:', error);
+            }
+        }
+
+        function showManualInput() {
             document.getElementById('fileList').innerHTML = `
-                <div class="empty-state">
-                    <i>❌</i>
-                    <h3>${message}</h3>
-                    <p>Please make sure the repository is public and the address is correct.</p>
+                <div class="error-state">
+                    <i style="font-size: 4em;">⚠️</i>
+                    <h3>Error receiving information</h3>
+                    <p>Unable to connect to GitHub or repository is private</p>
+                    <p>Please enter the information below:</p>
+                    <div style="margin: 20px 0;">
+                        <input type="text" id="retryOwner" placeholder="Username" style="padding: 10px; margin: 5px; width: 200px;">
+                        <input type="text" id="retryRepo" placeholder="Repository name" style="padding: 10px; margin: 5px; width: 200px;">
+                    </div>
+                    <button class="retry-btn" onclick="retryWithManual()">Try again</button>
                 </div>
             `;
+        }
+
+        function retryWithManual() {
+            const owner = document.getElementById('retryOwner').value;
+            const repo = document.getElementById('retryRepo').value;
+            
+            if (owner && repo) {
+                currentOwner = owner;
+                currentRepo = repo;
+                document.getElementById('repoPath').textContent = `${currentOwner}/${currentRepo}`;
+                fetchFiles();
+            } else {
+                alert('Please enter username and repository name');
+            }
         }
 
         function getFileIcon(fileName) {
@@ -441,42 +677,8 @@
             return icons[extension] || '📄';
         }
 
-        function formatFileSize(url) {
-            return 'N/A'; 
-        }
-
-        function createFileTree(files) {
-            const tree = {};
-            
-            files.forEach(file => {
-                const path = file.path;
-                const parts = path.split('/');
-                let current = tree;
-                
-                for (let i = 0; i < parts.length - 1; i++) {
-                    const part = parts[i];
-                    if (!current[part]) {
-                        current[part] = {};
-                    }
-                    current = current[part];
-                }
-                
-                const fileName = parts[parts.length - 1];
-                if (!current.files) current.files = [];
-                current.files.push({
-                    name: fileName,
-                    path: path,
-                    url: `https://github.com/${repoInfo.owner}/${repoInfo.repo}/raw/${repoInfo.branch}/${path}`
-                });
-            });
-            
-            return tree;
-        }
-
         function displayFiles() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            const fileTree = createFileTree(allFiles);
-            const fileListElement = document.getElementById('fileList');
             
             let filteredFiles = allFiles;
             if (searchTerm) {
@@ -485,86 +687,61 @@
                 );
             }
 
-            const filesInCurrentPath = filteredFiles.filter(file => {
-                if (currentPath === '') return true;
-                return file.path.startsWith(currentPath + '/') || file.path === currentPath;
-            });
+            const folders = {};
+            const rootFiles = [];
 
-            const currentTree = {};
-            filesInCurrentPath.forEach(file => {
-                const relativePath = file.path.startsWith(currentPath) ? 
-                    file.path.slice(currentPath.length).replace(/^\//, '') : file.path;
-                const parts = relativePath.split('/');
+            filteredFiles.forEach(file => {
+                const parts = file.path.split('/');
                 
-                if (parts.length > 1) {
-                    const folderName = parts[0];
-                    if (!currentTree[folderName]) {
-                        currentTree[folderName] = { files: [] };
-                    }
-                    if (parts.length > 2) {
-                        if (!currentTree[folderName].subfolders) {
-                            currentTree[folderName].subfolders = {};
-                        }
-                    } else {
-                        currentTree[folderName].files.push({
-                            name: parts[parts.length - 1],
-                            path: file.path,
-                            url: `https://github.com/${repoInfo.owner}/${repoInfo.repo}/raw/${repoInfo.branch}/${file.path}`
-                        });
-                    }
+                if (parts.length === 1) {
+                    rootFiles.push(file);
                 } else {
-                    if (!currentTree['_files']) currentTree['_files'] = [];
-                    currentTree['_files'].push({
-                        name: parts[0],
-                        path: file.path,
-                        url: `https://github.com/${repoInfo.owner}/${repoInfo.repo}/raw/${repoInfo.branch}/${file.path}`
-                    });
+                    const folderName = parts[0];
+                    if (!folders[folderName]) {
+                        folders[folderName] = [];
+                    }
+                    folders[folderName].push(file);
                 }
             });
 
             let html = '';
-            
-            if (currentTree['_files'] && currentTree['_files'].length > 0) {
+
+            if (rootFiles.length > 0) {
                 html += '<div class="folder-section">';
                 html += '<div class="folder-header" onclick="toggleFolder(this)">';
                 html += '<i>📄</i>';
-                html += '<span class="folder-name">Maih Files</span>';
-                html += '<span class="folder-count">' + currentTree['_files'].length + '</span>';
+                html += '<span class="folder-name">Main Files</span>';
+                html += '<span class="folder-count">' + rootFiles.length + '</span>';
                 html += '<span class="toggle-icon">▼</span>';
                 html += '</div>';
                 html += '<div class="folder-content">';
                 
-                currentTree['_files'].forEach(file => {
+                rootFiles.forEach(file => {
                     html += createFileItem(file);
                 });
                 
                 html += '</div>';
                 html += '</div>';
-                
-                delete currentTree['_files'];
             }
-            
-            Object.keys(currentTree).forEach(folderName => {
-                if (folderName !== '_files') {
-                    const folder = currentTree[folderName];
-                    html += '<div class="folder-section">';
-                    html += '<div class="folder-header" onclick="toggleFolder(this)">';
-                    html += '<i>📁</i>';
-                    html += '<span class="folder-name">' + folderName + '</span>';
-                    html += '<span class="folder-count">' + (folder.files ? folder.files.length : 0) + '</span>';
-                    html += '<span class="toggle-icon">▼</span>';
-                    html += '</div>';
-                    html += '<div class="folder-content">';
-                    
-                    if (folder.files) {
-                        folder.files.forEach(file => {
-                            html += createFileItem(file);
-                        });
-                    }
-                    
-                    html += '</div>';
-                    html += '</div>';
-                }
+
+            Object.keys(folders).sort().forEach(folderName => {
+                const folderFiles = folders[folderName];
+                
+                html += '<div class="folder-section">';
+                html += '<div class="folder-header" onclick="toggleFolder(this)">';
+                html += '<i>📁</i>';
+                html += '<span class="folder-name">' + folderName + '</span>';
+                html += '<span class="folder-count">' + folderFiles.length + '</span>';
+                html += '<span class="toggle-icon">▼</span>';
+                html += '</div>';
+                html += '<div class="folder-content">';
+                
+                folderFiles.forEach(file => {
+                    html += createFileItem(file);
+                });
+                
+                html += '</div>';
+                html += '</div>';
             });
 
             if (html === '') {
@@ -577,22 +754,23 @@
                 `;
             }
 
-            fileListElement.innerHTML = html;
-
-            updateStats();
+            document.getElementById('fileList').innerHTML = html;
         }
 
         function createFileItem(file) {
+            const fileName = file.path.split('/').pop();
+            const downloadUrl = file.url || `https://github.com/${currentOwner}/${currentRepo}/raw/${currentBranch}/${file.path}`;
+            
             return `
                 <div class="file-item">
-                    <div class="file-icon">${getFileIcon(file.name)}</div>
+                    <div class="file-icon">${getFileIcon(fileName)}</div>
                     <div class="file-info">
                         <div class="file-name">
-                            ${file.name}
+                            ${fileName}
                         </div>
                         <div class="file-path">${file.path}</div>
                     </div>
-                    <a href="${file.url}" class="download-btn" download>
+                    <a href="${downloadUrl}" class="download-btn" target="_blank" rel="noopener noreferrer">
                         <i>⬇️</i> Download
                     </a>
                 </div>
@@ -617,7 +795,9 @@
         }
 
         function filterItems() {
-            displayFiles();
+            if (allFiles.length > 0) {
+                displayFiles();
+            }
         }
 
         function navigateToRoot() {
@@ -628,7 +808,13 @@
             displayFiles();
         }
 
-        fetchFiles();
+        // detectRepo();
+        document.getElementById('repoPath').textContent = `${currentOwner}/${currentRepo}`;
+        if (currentOwner && currentRepo) {
+            loadFiles();
+        } else {
+            document.getElementById('manualInput').classList.add('show');
+        }
     </script>
 </body>
 </html>
