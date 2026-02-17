@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>MPMLab Source</title>
+    <title>MPMLab Source - Direct Download</title>
     <style>
         * {
             margin: 0;
@@ -155,7 +155,7 @@
             margin: 8px 0;
             border: 1px solid #ffc107;
             border-radius: 5px;
-            font-size: 16px; /* Prevent zoom on mobile */
+            font-size: 16px;
         }
 
         .manual-input button {
@@ -247,6 +247,34 @@
             transform: rotate(-90deg);
         }
 
+        .folder-download-btn {
+            background: #6B73FF;
+            color: white;
+            border: none;
+            padding: 4px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.75em;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            flex-shrink: 0;
+            margin-left: 4px;
+            white-space: nowrap;
+            transition: background 0.2s;
+            min-height: 32px;
+        }
+        .folder-download-btn:hover {
+            background: #5159e0;
+        }
+        @media (max-width: 480px) {
+            .folder-download-btn {
+                padding: 4px 8px;
+                font-size: 0.7em;
+            }
+        }
+
         .folder-content {
             margin-right: 15px;
             border-right: 2px dashed #dee2e6;
@@ -298,7 +326,7 @@
         }
 
         .download-btn {
-            background: #6B73FF;
+            background: #28a745;
             color: white;
             border: none;
             padding: 6px 12px;
@@ -311,8 +339,11 @@
             gap: 4px;
             flex-shrink: 0;
             white-space: nowrap;
+            transition: background 0.2s;
         }
-
+        .download-btn:hover {
+            background: #218838;
+        }
         .download-btn i {
             font-size: 0.9em;
         }
@@ -371,8 +402,7 @@
             margin-top: 15px;
         }
 
-        /* Improve touch targets */
-        button, select, .folder-header, .download-btn {
+        button, select, .folder-header, .download-btn, .folder-download-btn {
             min-height: 44px;
             min-width: 44px;
         }
@@ -411,7 +441,7 @@
                     <span id="fileCount">0</span>
                 </div>
                 <a id="downloadZipBtn" class="download-zip-btn" target="_blank" rel="noopener noreferrer">
-                    <i>📦</i> <span class="hide-on-mobile">Download ZIP</span><span class="show-on-mobile">ZIP</span>
+                    <i>📦</i> <span class="hide-on-mobile">(240MB)</span><span class="show-on-mobile">Download ZIP</span>
                 </a>
             </div>
         </div>
@@ -592,10 +622,14 @@
                     const part = parts[i];
                     if (i === parts.length - 1) {
                         if (!current.files) current.files = [];
+                        let downloadUrl = file.url;
+                        if (!downloadUrl) {
+                            downloadUrl = `https://raw.githubusercontent.com/${currentOwner}/${currentRepo}/${currentBranch}/${file.path}`;
+                        }
                         current.files.push({
                             name: part,
                             path: file.path,
-                            url: file.url || `https://github.com/${currentOwner}/${currentRepo}/raw/${currentBranch}/${file.path}`
+                            url: downloadUrl
                         });
                     } else {
                         if (!current[part]) {
@@ -605,6 +639,13 @@
                     }
                 }
             });
+        }
+
+        function downloadFolderAsZip(folderPath) {
+            let cleanPath = folderPath.replace(/^\/+|\/+$/g, '');
+            const githubUrl = `https://github.com/${currentOwner}/${currentRepo}/tree/${currentBranch}/${cleanPath}`;
+            const downloadServiceUrl = `https://download-directory.github.io/?url=${encodeURIComponent(githubUrl)}`;
+            window.open(downloadServiceUrl, '_blank');
         }
 
         function displayFiles(node = window.fileTree, level = 0) {
@@ -619,7 +660,6 @@
         function renderNode(node, path = '', searchTerm = '') {
             let html = '';
             
-            // Sort folders alphabetically
             const folders = Object.keys(node).filter(key => key !== 'files' && typeof node[key] === 'object').sort();
             
             folders.forEach(key => {
@@ -639,6 +679,9 @@
                                 <i>📁</i>
                                 <span class="folder-name" title="${key}">${key}</span>
                                 ${fileCount > 0 ? `<span class="folder-count">${fileCount}</span>` : ''}
+                                <a class="folder-download-btn" href="#" onclick="event.stopPropagation(); downloadFolderAsZip('${folderPath}'); return false;" title="Download folder as ZIP">
+                                    <i>📦</i> <span>ZIP</span>
+                                </a>
                                 <span class="toggle-icon">▼</span>
                             </div>
                             <div class="folder-content">
@@ -650,7 +693,6 @@
             });
             
             if (node.files) {
-                // Sort files alphabetically
                 const sortedFiles = [...node.files].sort((a, b) => a.name.localeCompare(b.name));
                 
                 sortedFiles.forEach(file => {
@@ -666,6 +708,11 @@
         function createFileItem(file) {
             const fileName = file.name || file.path.split('/').pop();
             
+            let downloadLink = file.url;
+            if (downloadLink && downloadLink.includes('api.github.com/repos/') && downloadLink.includes('/git/blobs/')) {
+                downloadLink = `https://raw.githubusercontent.com/${currentOwner}/${currentRepo}/${currentBranch}/${file.path}`;
+            }
+            
             return `
                 <div class="file-item">
                     <div class="file-icon">${getFileIcon(fileName)}</div>
@@ -673,7 +720,7 @@
                         <div class="file-name" title="${fileName}">${fileName}</div>
                         <div class="file-path" title="${file.path}">${file.path}</div>
                     </div>
-                    <a href="${file.url}" class="download-btn" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">
+                    <a href="${downloadLink}" class="download-btn" target="_blank" rel="noopener noreferrer" download onclick="event.stopPropagation()">
                         <i>⬇️</i> DL
                     </a>
                 </div>
