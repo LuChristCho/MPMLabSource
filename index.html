@@ -2,7 +2,7 @@
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
     <title>MPMLab Source</title>
     <style>
         * {
@@ -12,110 +12,134 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            padding: 20px;
+            padding: 10px;
         }
 
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
             overflow: hidden;
         }
 
         .header {
             background: linear-gradient(135deg, #6B73FF 0%, #000DFF 100%);
             color: white;
-            padding: 30px;
+            padding: 20px 15px;
             text-align: center;
         }
 
         .header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
+            font-size: 1.8em;
+            margin-bottom: 5px;
         }
 
         .header p {
-            font-size: 1.1em;
+            font-size: 0.9em;
             opacity: 0.95;
         }
 
         .repo-info {
             background: #f8f9fa;
-            padding: 20px 30px;
+            padding: 15px;
             border-bottom: 1px solid #e9ecef;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 15px;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        @media (min-width: 768px) {
+            .repo-info {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+            }
         }
 
         .branch-selector {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
+            flex-wrap: wrap;
+            width: 100%;
         }
 
         .branch-selector select {
-            padding: 8px 15px;
+            padding: 8px 12px;
             border: 2px solid #e9ecef;
             border-radius: 8px;
-            font-size: 1em;
+            font-size: 0.95em;
             background: white;
-            cursor: pointer;
+            max-width: 120px;
         }
 
         .repo-path {
             display: flex;
             align-items: center;
-            gap: 10px;
-            font-size: 1.1em;
+            gap: 5px;
+            font-size: 0.95em;
             color: #495057;
+            background: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .repo-path span {
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .stats {
             display: flex;
-            gap: 20px;
+            gap: 10px;
             align-items: center;
+            flex-wrap: wrap;
         }
 
         .stat-item {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 5px;
             background: white;
-            padding: 8px 15px;
+            padding: 6px 12px;
             border-radius: 50px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            font-size: 0.9em;
+            white-space: nowrap;
         }
 
         .download-zip-btn {
             background: #28a745;
             color: white;
             border: none;
-            padding: 8px 20px;
+            padding: 8px 15px;
             border-radius: 8px;
             cursor: pointer;
-            font-size: 1em;
+            font-size: 0.9em;
             text-decoration: none;
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            transition: all 0.3s;
+            gap: 5px;
+            transition: all 0.2s;
+            white-space: nowrap;
         }
 
         .download-zip-btn:hover {
             background: #218838;
-            transform: scale(1.05);
         }
 
         .manual-input {
-            padding: 20px 30px;
+            padding: 15px;
             background: #fff3cd;
             border-bottom: 1px solid #ffeeba;
             display: none;
@@ -128,9 +152,10 @@
         .manual-input input {
             width: 100%;
             padding: 10px;
-            margin: 10px 0;
+            margin: 8px 0;
             border: 1px solid #ffc107;
             border-radius: 5px;
+            font-size: 16px; /* Prevent zoom on mobile */
         }
 
         .manual-input button {
@@ -139,61 +164,66 @@
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            color: #000;
+            width: 100%;
+            font-size: 16px;
         }
 
         .search-box {
-            padding: 20px 30px;
+            padding: 15px;
             background: white;
             border-bottom: 1px solid #e9ecef;
         }
 
         .search-box input {
             width: 100%;
-            padding: 15px 20px;
+            padding: 12px 15px;
             border: 2px solid #e9ecef;
-            border-radius: 12px;
-            font-size: 1em;
+            border-radius: 10px;
+            font-size: 16px;
         }
 
         .file-list {
-            padding: 20px 30px;
-            min-height: 400px;
-            max-height: 600px;
+            padding: 15px;
+            min-height: 300px;
+            max-height: 70vh;
             overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         .folder-section {
-            margin-bottom: 15px;
+            margin-bottom: 12px;
         }
 
         .folder-header {
             display: flex;
             align-items: center;
-            gap: 10px;
-            padding: 10px 15px;
+            gap: 8px;
+            padding: 10px 12px;
             background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
             border-radius: 8px;
-            margin-bottom: 5px;
+            margin-bottom: 4px;
             cursor: pointer;
             border: 1px solid #dee2e6;
-        }
-
-        .folder-header:hover {
-            background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+            min-width: 0;
         }
 
         .folder-header i {
             color: #FFD43B;
-            font-size: 1.2em;
-            min-width: 25px;
+            font-size: 1.1em;
+            min-width: 24px;
+            text-align: center;
+            flex-shrink: 0;
         }
 
         .folder-header .folder-name {
-            font-size: 1.1em;
+            font-size: 1em;
             font-weight: 600;
             color: #495057;
-            flex-grow: 1;
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .folder-header .folder-count {
@@ -201,14 +231,16 @@
             color: white;
             padding: 2px 8px;
             border-radius: 50px;
-            font-size: 0.85em;
-            margin: 0 5px;
+            font-size: 0.8em;
+            margin: 0 4px;
+            flex-shrink: 0;
         }
 
         .folder-header .toggle-icon {
             color: #6c757d;
-            transition: transform 0.3s;
-            font-size: 0.9em;
+            transition: transform 0.2s;
+            font-size: 0.8em;
+            flex-shrink: 0;
         }
 
         .folder-header.collapsed .toggle-icon {
@@ -216,9 +248,9 @@
         }
 
         .folder-content {
-            margin-right: 25px;
+            margin-right: 15px;
             border-right: 2px dashed #dee2e6;
-            padding-right: 15px;
+            padding-right: 10px;
         }
 
         .folder-header.collapsed + .folder-content {
@@ -228,89 +260,91 @@
         .file-item {
             display: flex;
             align-items: center;
-            padding: 8px 15px;
-            margin: 3px 0;
+            padding: 8px 12px;
+            margin: 4px 0;
             background: white;
             border: 1px solid #e9ecef;
             border-radius: 6px;
-        }
-
-        .file-item:hover {
-            background: #f8f9fa;
-            border-color: #6B73FF;
+            gap: 8px;
+            min-width: 0;
         }
 
         .file-icon {
-            margin-left: 10px;
             font-size: 1.1em;
-            min-width: 25px;
+            min-width: 24px;
+            text-align: center;
+            flex-shrink: 0;
         }
 
         .file-info {
-            flex-grow: 1;
+            flex: 1;
+            min-width: 0;
         }
 
         .file-name {
-            font-size: 1em;
+            font-size: 0.95em;
             color: #212529;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .file-path {
-            font-size: 0.8em;
+            font-size: 0.7em;
             color: #6c757d;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .download-btn {
             background: #6B73FF;
             color: white;
             border: none;
-            padding: 5px 15px;
+            padding: 6px 12px;
             border-radius: 5px;
             cursor: pointer;
-            font-size: 0.85em;
+            font-size: 0.8em;
             text-decoration: none;
             display: inline-flex;
             align-items: center;
-            gap: 5px;
+            gap: 4px;
+            flex-shrink: 0;
+            white-space: nowrap;
         }
 
-        .download-btn:hover {
-            background: #000DFF;
+        .download-btn i {
+            font-size: 0.9em;
         }
 
-        .empty-state {
+        .empty-state, .error-state {
             text-align: center;
-            padding: 60px 20px;
+            padding: 40px 20px;
             color: #6c757d;
-        }
-
-        .error-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: #dc3545;
         }
 
         .footer {
             background: #f8f9fa;
-            padding: 20px 30px;
+            padding: 15px;
             text-align: center;
             border-top: 1px solid #e9ecef;
             color: #6c757d;
+            font-size: 0.85em;
         }
 
         .loading {
             text-align: center;
-            padding: 50px;
+            padding: 40px;
         }
 
         .loading-spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #6B73FF;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #6B73FF;
             border-radius: 50%;
-            width: 50px;
-            height: 50px;
+            width: 40px;
+            height: 40px;
             animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
+            margin: 0 auto 15px;
         }
 
         @keyframes spin {
@@ -323,18 +357,28 @@
             border: none;
             color: #6B73FF;
             cursor: pointer;
-            font-size: 1.1em;
+            font-size: 1em;
         }
 
         .retry-btn {
-            padding: 10px 30px;
+            padding: 8px 25px;
             background: #6B73FF;
             color: white;
             border: none;
             border-radius: 8px;
             cursor: pointer;
-            font-size: 1.1em;
-            margin-top: 20px;
+            font-size: 1em;
+            margin-top: 15px;
+        }
+
+        /* Improve touch targets */
+        button, select, .folder-header, .download-btn {
+            min-height: 44px;
+            min-width: 44px;
+        }
+
+        .folder-header, .file-item {
+            -webkit-tap-highlight-color: transparent;
         }
     </style>
 </head>
@@ -352,22 +396,22 @@
                     <option value="master">master</option>
                     <option value="gh-pages">gh-pages</option>
                 </select>
-                <span class="repo-path">
+                <div class="repo-path">
                     <i>📂</i>
                     <span id="repoPath"></span>
-                </span>
+                </div>
             </div>
             <div class="stats">
                 <div class="stat-item">
                     <i>📁</i>
-                    <span id="folderCount">0</span> Folder
+                    <span id="folderCount">0</span>
                 </div>
                 <div class="stat-item">
                     <i>📄</i>
-                    <span id="fileCount">0</span> File
+                    <span id="fileCount">0</span>
                 </div>
                 <a id="downloadZipBtn" class="download-zip-btn" target="_blank" rel="noopener noreferrer">
-                    <i>📦</i> Download the full source as a zip (about 230 MB)
+                    <i>📦</i> <span class="hide-on-mobile">Download ZIP</span><span class="show-on-mobile">ZIP</span>
                 </a>
             </div>
         </div>
@@ -391,7 +435,7 @@
         </div>
 
         <div class="footer">
-            <p>To download any file, click on the download button | Last updated: <span id="updateDate"></span></p>
+            <p>Click on any file to download | Last updated: <span id="updateDate"></span></p>
         </div>
     </div>
 
@@ -529,9 +573,10 @@
         function showError(message) {
             document.getElementById('fileList').innerHTML = `
                 <div class="error-state">
-                    <i style="font-size: 4em;">❌</i>
+                    <div style="font-size: 3em; margin-bottom: 15px;">❌</div>
                     <h3>${message}</h3>
                     <p>Please make sure the repository is public and the address is correct.</p>
+                    <button class="retry-btn" onclick="loadFiles()">Try Again</button>
                 </div>
             `;
         }
@@ -567,42 +612,48 @@
             const container = document.getElementById('fileList');
             
             if (level === 0) {
-                container.innerHTML = renderNode(node, '', searchTerm);
+                container.innerHTML = renderNode(node, '', searchTerm) || '<div class="empty-state">No files found</div>';
             }
         }
 
         function renderNode(node, path = '', searchTerm = '') {
             let html = '';
             
-            Object.keys(node).forEach(key => {
-                if (key !== 'files' && typeof node[key] === 'object') {
-                    const folderPath = path ? `${path}/${key}` : key;
-                    const folderContent = node[key];
-                    
-                    const hasMatchingContent = searchTerm === '' || 
-                        key.toLowerCase().includes(searchTerm) || 
-                        (folderContent.files && folderContent.files.some(f => f.name.toLowerCase().includes(searchTerm)));
-                    
-                    if (hasMatchingContent || searchTerm === '') {
-                        html += `
-                            <div class="folder-section">
-                                <div class="folder-header collapsed" onclick="toggleFolder(this)">
-                                    <i>📁</i>
-                                    <span class="folder-name">${key}</span>
-                                    <span class="folder-count">${folderContent.files ? folderContent.files.length : 0}</span>
-                                    <span class="toggle-icon">▼</span>
-                                </div>
-                                <div class="folder-content">
-                                    ${renderNode(folderContent, folderPath, searchTerm)}
-                                </div>
+            // Sort folders alphabetically
+            const folders = Object.keys(node).filter(key => key !== 'files' && typeof node[key] === 'object').sort();
+            
+            folders.forEach(key => {
+                const folderPath = path ? `${path}/${key}` : key;
+                const folderContent = node[key];
+                
+                const fileCount = folderContent.files ? folderContent.files.length : 0;
+                
+                const hasMatchingContent = searchTerm === '' || 
+                    key.toLowerCase().includes(searchTerm) || 
+                    (folderContent.files && folderContent.files.some(f => f.name.toLowerCase().includes(searchTerm)));
+                
+                if (hasMatchingContent || searchTerm === '') {
+                    html += `
+                        <div class="folder-section">
+                            <div class="folder-header collapsed" onclick="toggleFolder(this)">
+                                <i>📁</i>
+                                <span class="folder-name" title="${key}">${key}</span>
+                                ${fileCount > 0 ? `<span class="folder-count">${fileCount}</span>` : ''}
+                                <span class="toggle-icon">▼</span>
                             </div>
-                        `;
-                    }
+                            <div class="folder-content">
+                                ${renderNode(folderContent, folderPath, searchTerm)}
+                            </div>
+                        </div>
+                    `;
                 }
             });
             
             if (node.files) {
-                node.files.forEach(file => {
+                // Sort files alphabetically
+                const sortedFiles = [...node.files].sort((a, b) => a.name.localeCompare(b.name));
+                
+                sortedFiles.forEach(file => {
                     if (searchTerm === '' || file.name.toLowerCase().includes(searchTerm) || file.path.toLowerCase().includes(searchTerm)) {
                         html += createFileItem(file);
                     }
@@ -619,11 +670,11 @@
                 <div class="file-item">
                     <div class="file-icon">${getFileIcon(fileName)}</div>
                     <div class="file-info">
-                        <div class="file-name">${fileName}</div>
-                        <div class="file-path">${file.path}</div>
+                        <div class="file-name" title="${fileName}">${fileName}</div>
+                        <div class="file-path" title="${file.path}">${file.path}</div>
                     </div>
-                    <a href="${file.url}" class="download-btn" target="_blank" rel="noopener noreferrer">
-                        <i>⬇️</i> Download
+                    <a href="${file.url}" class="download-btn" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">
+                        <i>⬇️</i> DL
                     </a>
                 </div>
             `;
@@ -636,7 +687,9 @@
                 'md': '📝', 'txt': '📄', 'jpg': '🖼️', 'png': '🖼️',
                 'gif': '🖼️', 'pdf': '📕', 'zip': '📦', 'py': '🐍',
                 'java': '☕', 'cpp': '⚙️', 'php': '🐘', 'xml': '🔧',
-                'yml': '⚙️', 'yaml': '⚙️', 'sh': '🐚', 'bat': '📦'
+                'yml': '⚙️', 'yaml': '⚙️', 'sh': '🐚', 'bat': '📦',
+                'mp4': '🎬', 'mp3': '🎵', 'wav': '🎵', 'doc': '📝',
+                'xls': '📊', 'ppt': '📽️'
             };
             return icons[extension] || '📄';
         }
